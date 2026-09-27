@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f6f1">
+    <title>Mountain owner flow — prototype</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1e302b;
+        --muted: #78847c;
+        --paper: #f5f6f1;
+        --card: #fff;
+        --line: #e8ece5;
+        --green: #337a59;
+        --green-dark: #24583f;
+        --green-soft: #e3f1e7;
+        --amber: #f3c77b;
+        --shadow: 0 14px 40px rgb(31 51 42 / 6%);
+        font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at 78% -12%, #e9f0e5 0, transparent 36rem),
+          var(--paper);
+      }
+      button, input, select { font: inherit; }
+      button { color: inherit; }
+      button:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 3px solid #a5c9a9;
+        outline-offset: 2px;
+      }
+      .prototype-note {
+        padding: 8px 16px;
+        color: #694d20;
+        background: #fff2d6;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 650;
+      }
+      .topbar {
+        display: flex;
+        min-height: 68px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 0 max(24px, calc((100vw - 1360px) / 2));
+        border-bottom: 1px solid rgb(50 75 60 / 8%);
+      }
+      .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; letter-spacing: -.04em; }
+      .brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: #fff; background: var(--green); }
+      .top-meta { color: var(--muted); font-size: 11px; }
+      .top-user { display: flex; align-items: center; gap: 9px; color: #59685e; font-size: 11px; }
+      .avatar { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: var(--green-dark); background: #dcecdf; font-weight: 800; }
+      #app { min-height: calc(100vh - 106px); }
+      .eyebrow { margin: 0 0 8px; color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1, .serif { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.04em; }
+      h1 { margin-bottom: 7px; font-size: clamp(27px, 3vw, 38px); line-height: 1.1; }
+      h2 { margin-bottom: 4px; font-size: 17px; }
+      .muted { color: var(--muted); }
+      .small { font-size: 11px; }
+      .button {
+        display: inline-flex;
+        min-height: 38px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 13px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .button:hover { border-color: #c6d8c9; background: #fbfdf9; }
+      .button.primary { border-color: var(--green); color: #fff; background: var(--green); }
+      .button.primary:hover { border-color: var(--green-dark); background: var(--green-dark); }
+      .button.quiet { border-color: transparent; background: transparent; }
+      .button.danger { color: #a44332; }
+      .button:disabled { opacity: .4; cursor: default; }
+      .icon-button {
+        display: inline-grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .card { border: 1px solid rgb(42 65 49 / 8%); border-radius: 15px; background: var(--card); box-shadow: var(--shadow); }
+      .pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 999px; color: #4d6555; background: #eef4ec; font-size: 9px; font-weight: 750; }
+      .pill.archive { color: #716a5a; background: #f2f0ea; }
+      .pill.private { color: #67736a; background: #f0f2ef; }
+      .library-tabs { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: #f7f8f5; }
+      .library-tabs button { min-height: 28px; padding: 0 9px; border: 0; border-radius: 6px; color: #77837a; background: transparent; cursor: pointer; font-size: 10px; font-weight: 700; }
+      .library-tabs button[aria-pressed="true"] { color: var(--green-dark); background: white; box-shadow: 0 1px 4px rgb(34 56 42 / 10%); }
+      .mountain-link {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+      }
+      .mountain-link:hover, .mountain-link.selected { background: #eef5ed; }
+      .mountain-glyph { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border-radius: 9px; color: var(--green); background: #e3f1e7; font-size: 14px; }
+      .mountain-link.archive-link .mountain-glyph { color: #777060; background: #f1efe9; }
+      .mountain-link strong, .mountain-link small { display: block; }
+      .mountain-link strong { max-width: 190px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .mountain-link small { margin-top: 4px; color: var(--muted); font-size: 9px; }
+      .section-label { margin: 15px 0 7px; color: #88938a; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .mountain-list { display: flex; flex-direction: column; gap: 2px; }
+      .app-page { width: min(1340px, calc(100% - 48px)); margin: 0 auto; padding: 26px 0 100px; }
+      .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+      .page-heading p { max-width: 540px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .heading-actions { display: flex; align-items: center; gap: 8px; }
+
+      /* Trailhead: persistent navigation beside a weekly working surface. */
+      .variant-trailhead .app-page { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 23px; }
+      .trailhead-sidebar { position: sticky; top: 16px; align-self: start; padding: 15px 11px; }
+      .sidebar-head { display: flex; align-items: center; justify-content: space-between; padding: 1px 5px 9px; }
+      .sidebar-head strong { font-size: 11px; }
+      .sidebar-head .icon-button { width: 27px; height: 27px; }
+      .sidebar-controls { display: flex; justify-content: center; margin: 5px 4px 11px; }
+      .trailhead-main { min-width: 0; }
+      .trailhead-heading { margin: 5px 0 17px; }
+      .trailhead-heading .eyebrow { margin-bottom: 7px; }
+      .trailhead-heading h1 { margin-bottom: 5px; }
+      .mountain-workspace { overflow: hidden; }
+      .workspace-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 19px 21px 16px; border-bottom: 1px solid #edf0eb; }
+      .workspace-title { min-width: 0; }
+      .workspace-title h2 { overflow: hidden; font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 500; letter-spacing: -.035em; text-overflow: ellipsis; white-space: nowrap; }
+      .workspace-title p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+      .workspace-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+      .view-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 19px; border-bottom: 1px solid #f0f2ed; }
+      .view-switch { display: flex; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: #f7f8f5; }
+      .view-switch button { min-height: 28px; padding: 0 10px; border: 0; border-radius: 6px; color: #79847c; background: transparent; cursor: pointer; font-size: 10px; font-weight: 700; }
+      .view-switch button[aria-pressed="true"] { color: var(--green-dark); background: #fff; box-shadow: 0 1px 4px rgb(34 56 42 / 10%); }
+      .week-controls { display: flex; align-items: center; gap: 9px; }
+      .week-controls strong { min-width: 130px; text-align: center; font-size: 10px; }
+      .week-controls span { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; font-weight: 500; }
+      .week-controls .icon-button { width: 27px; height: 27px; }
+      .visualization { min-height: 370px; padding: 25px 18px 28px; }
+      .pyramid { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .pyramid-row { display: flex; max-width: 100%; justify-content: center; gap: 6px; }
+      .day-block {
+        position: relative;
+        display: flex;
+        width: clamp(32px, 4.4vw, 50px);
+        height: clamp(41px, 5vw, 57px);
+        flex: 0 0 auto;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 3px;
+        border: 1px solid #e9ede7;
+        border-radius: 8px;
+        color: #35473b;
+        background: #fbfcfa;
+        cursor: pointer;
+      }
+      .day-block:hover:not(:disabled) { border-color: #a9c5ad; background: #f6faf4; }
+      .day-block.has-activities { border-color: #cce4d1; color: #23583b; background: var(--green-soft); }
+      .day-block:disabled { cursor: default; }
+      .day-block.outside { border-style: dashed; color: #b0b8b0; background: #fafbf9; }
+      .day-block .day-number { font-size: 12px; font-weight: 750; line-height: 1; }
+      .day-block .day-month { color: #87948a; font-size: 8px; line-height: 1; }
+      .day-block.has-activities .day-month { color: #59816a; }
+      .activity-dot { position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: #4e9568; }
+      .week-grid { display: grid; width: min(100%, 700px); grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin: 23px auto; }
+      .week-day { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+      .week-day-label { color: #859087; text-align: center; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+      .week-grid .day-block { width: 100%; height: 86px; }
+      .week-grid .day-block .day-number { font-size: 18px; }
+      .week-grid .day-block .day-month { font-size: 8px; }
+      .week-grid .outside-day { min-height: 86px; border: 1px dashed #e8ece6; border-radius: 8px; background: #fbfcfa; }
+      .day-caption { overflow: hidden; color: #78847c; text-align: center; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+      .workspace-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 19px; border-top: 1px solid #edf0eb; color: var(--muted); font-size: 9px; }
+      .empty-selection { padding: 44px 22px; text-align: center; }
+      .empty-selection p { max-width: 310px; margin: 8px auto 16px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+      /* Fieldnotes: scan a visual library, then work through a chronological week. */
+      .variant-fieldnotes .app-page { padding-top: 34px; }
+      .variant-fieldnotes .page-heading { align-items: flex-start; margin-bottom: 26px; }
+      .fieldnotes-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .85fr); align-items: start; gap: 18px; }
+      .notes-card { overflow: hidden; }
+      .notes-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 22px 22px 17px; border-bottom: 1px solid #edf0eb; }
+      .notes-head h2 { font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 500; }
+      .notes-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+      .notes-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 20px; border-bottom: 1px solid #f0f2ed; }
+      .notes-week-nav { display: flex; align-items: center; gap: 8px; }
+      .notes-week-nav strong { font-size: 10px; }
+      .notes-feed { display: flex; flex-direction: column; padding: 8px 20px 16px; }
+      .agenda-day { display: grid; grid-template-columns: 63px minmax(0, 1fr); gap: 13px; padding: 15px 0; border-bottom: 1px solid #f0f2ed; }
+      .agenda-date { color: #748177; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+      .agenda-date strong { display: block; margin: 4px 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 24px; font-weight: 500; text-transform: none; }
+      .agenda-entries { display: flex; flex-direction: column; gap: 6px; }
+      .agenda-entry { display: flex; align-items: center; gap: 8px; min-height: 26px; color: #425449; font-size: 11px; }
+      .agenda-entry::before { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: #73a881; content: ""; }
+      .agenda-empty { color: #a0a9a0; font-size: 10px; font-style: italic; }
+      .agenda-add { align-self: flex-start; margin-top: 7px; padding: 4px 0; border: 0; color: var(--green); background: transparent; cursor: pointer; font-size: 9px; font-weight: 750; }
+      .notes-side { display: flex; flex-direction: column; gap: 13px; }
+      .library-card { padding: 17px; }
+      .library-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+      .library-heading h2 { margin: 0; font-size: 13px; }
+      .library-list { display: flex; flex-direction: column; gap: 5px; }
+      .library-item {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        padding: 10px 8px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+      }
+      .library-item:hover, .library-item.selected { border-color: #e5eee4; background: #f6faf5; }
+      .library-item .mountain-glyph { width: 36px; height: 36px; }
+      .library-item strong, .library-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .library-item strong { font-size: 10px; }
+      .library-item small { margin-top: 4px; color: var(--muted); font-size: 8px; }
+      .library-item .progress { color: var(--green); font-size: 10px; font-weight: 800; }
+      .summary-card { display: grid; grid-template-columns: repeat(3, 1fr); padding: 15px; }
+      .summary-stat { padding: 0 9px; border-right: 1px solid #edf0eb; }
+      .summary-stat:last-child { border-right: 0; }
+      .summary-stat strong { display: block; font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 500; }
+      .summary-stat span { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; }
+
+      /* Summit: an immersive visualization with controls collected in a management rail. */
+      .variant-summit .app-page { width: min(1440px, calc(100% - 40px)); padding-top: 20px; }
+      .summit-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid rgb(50 75 60 / 8%); }
+      .summit-picker { display: flex; align-items: center; gap: 11px; }
+      .summit-picker select { max-width: min(380px, 48vw); min-height: 39px; padding: 0 32px 0 11px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: white; font-weight: 700; }
+      .summit-body { display: grid; grid-template-columns: minmax(0, 1fr) 276px; gap: 20px; padding-top: 22px; }
+      .summit-main { min-width: 0; }
+      .summit-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin: 7px 0 19px; }
+      .summit-hero h1 { margin-bottom: 7px; font-size: clamp(31px, 4vw, 49px); }
+      .summit-hero p { margin: 0; color: var(--muted); font-size: 11px; }
+      .summit-stats { display: flex; align-items: center; gap: 18px; }
+      .summit-stat { min-width: 53px; text-align: right; }
+      .summit-stat strong { display: block; font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 500; }
+      .summit-stat span { display: block; color: var(--muted); font-size: 8px; }
+      .summit-display { min-height: 450px; padding: 13px 13px 21px; border: 1px solid rgb(42 65 49 / 8%); border-radius: 17px; background: #fff; box-shadow: var(--shadow); }
+      .summit-display-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 3px 5px 13px; border-bottom: 1px solid #edf0eb; }
+      .summit-display-top .view-switch { background: #f7f8f5; }
+      .summit-display .visualization { display: grid; min-height: 380px; place-items: center; padding: 18px 5px; }
+      .summit-display .day-block { width: clamp(34px, 5.1vw, 59px); height: clamp(44px, 6vw, 68px); border-radius: 10px; }
+      .summit-display .day-block .day-number { font-size: 14px; }
+      .summit-display .pyramid { gap: 8px; }
+      .summit-display .pyramid-row { gap: 8px; }
+      .summit-display .week-grid { margin: auto; }
+      .summit-rail { display: flex; flex-direction: column; gap: 12px; }
+      .rail-card { padding: 16px; }
+      .rail-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 13px; }
+      .rail-heading h2 { margin: 0; font-size: 12px; }
+      .range-line { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f2ed; color: #68766c; font-size: 9px; }
+      .range-line:last-child { border-bottom: 0; }
+      .range-line strong { color: var(--ink); text-align: right; font-size: 9px; }
+      .rail-actions { display: flex; flex-direction: column; gap: 7px; }
+      .rail-actions .button { width: 100%; justify-content: flex-start; }
+      .completion-bar { height: 6px; margin: 10px 0 7px; overflow: hidden; border-radius: 99px; background: #edf1eb; }
+      .completion-bar span { display: block; height: 100%; border-radius: inherit; background: #66a477; }
+
+      .empty-library { padding: 16px 10px; color: var(--muted); text-align: center; font-size: 10px; line-height: 1.5; }
+      .empty-library strong { display: block; margin-bottom: 4px; color: var(--ink); }
+      .library-empty-main { padding: 64px 20px; text-align: center; }
+      .library-empty-main p { max-width: 360px; margin: 7px auto 16px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+      .empty-mark { display: grid; width: 52px; height: 52px; place-items: center; margin: 0 auto 13px; border-radius: 16px; color: var(--green); background: #e4f0e3; font-size: 23px; }
+
+      dialog { width: min(510px, calc(100% - 28px)); max-height: min(86vh, 760px); padding: 0; overflow: auto; border: 1px solid rgb(42 65 49 / 9%); border-radius: 16px; color: var(--ink); background: var(--card); box-shadow: 0 25px 80px rgb(25 39 31 / 22%); }
+      dialog::backdrop { background: rgb(25 39 31 / 37%); backdrop-filter: blur(2px); }
+      .dialog-content { padding: 22px; }
+      .dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 19px; }
+      .dialog-head h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 500; letter-spacing: -.03em; }
+      .dialog-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+      .field { display: block; margin-bottom: 13px; }
+      .field span { display: block; margin-bottom: 6px; color: #526158; font-size: 10px; font-weight: 750; }
+      .field input { width: 100%; min-height: 41px; padding: 0 10px; border: 1px solid #e4e9e2; border-radius: 8px; color: var(--ink); background: #fcfdfa; font-size: 11px; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 11px; }
+      .range-preview { margin: 2px 0 13px; padding: 10px; border-radius: 8px; color: #637369; background: #f5f8f3; font-size: 10px; line-height: 1.5; }
+      .range-preview strong { color: var(--green-dark); }
+      .form-error { display: none; margin: 0 0 12px; color: #a44332; font-size: 10px; line-height: 1.45; }
+      .form-error.visible { display: block; }
+      .dialog-notice { margin: 11px 0 15px; padding: 10px; border-radius: 8px; color: #65736a; background: #f5f8f3; font-size: 9px; line-height: 1.5; }
+      .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; margin-top: 17px; }
+      .activity-form { display: flex; gap: 7px; margin-bottom: 17px; }
+      .activity-form input { min-width: 0; min-height: 39px; flex: 1; padding: 0 10px; border: 1px solid #e2e8e0; border-radius: 8px; font-size: 11px; }
+      .activity-list { display: flex; max-height: 270px; flex-direction: column; gap: 6px; overflow: auto; }
+      .activity-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; padding: 7px 9px; border: 1px solid #edf0eb; border-radius: 8px; background: #fcfdfa; font-size: 10px; }
+      .activity-item span { min-width: 0; overflow-wrap: anywhere; }
+      .activity-item-actions { display: flex; flex: 0 0 auto; gap: 3px; }
+      .activity-item-actions .button { min-height: 27px; padding: 0 7px; font-size: 9px; }
+      .activity-empty { padding: 13px; border: 1px dashed #e4e9e2; border-radius: 8px; color: #929c93; text-align: center; font-size: 10px; }
+      .share-url { display: flex; gap: 7px; margin: 12px 0; }
+      .share-url input { min-width: 0; min-height: 39px; flex: 1; padding: 0 9px; border: 1px solid #e2e8e0; border-radius: 8px; color: #516259; background: #f8faf7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; }
+      .public-preview { margin-top: 14px; padding: 13px; border: 1px solid #e7ece5; border-radius: 11px; background: #fafbf9; }
+      .public-preview h3 { margin-bottom: 5px; font-family: Georgia, "Times New Roman", serif; font-size: 17px; font-weight: 500; }
+      .public-preview p { margin-bottom: 10px; color: var(--muted); font-size: 9px; }
+      .public-days { display: flex; flex-wrap: wrap; gap: 5px; }
+      .public-day { min-width: 33px; padding: 5px 6px; border: 1px solid #e9ede7; border-radius: 7px; color: #607065; background: #fff; text-align: center; font-size: 8px; }
+      .public-day.complete { border-color: #cce4d1; color: #23583b; background: var(--green-soft); }
+      .public-entries { display: flex; flex-direction: column; gap: 5px; margin-top: 11px; color: #536359; font-size: 9px; }
+      .public-entries strong { color: var(--ink); }
+      .toast { position: fixed; right: 20px; bottom: 80px; z-index: 5; max-width: min(360px, calc(100% - 32px)); padding: 10px 13px; border: 1px solid #d8e8da; border-radius: 10px; color: #28583b; background: #f1f8f0; box-shadow: var(--shadow); font-size: 10px; opacity: 0; pointer-events: none; transform: translateY(6px); transition: opacity .18s, transform .18s; }
+      .toast.visible { opacity: 1; transform: translateY(0); }
+      .variant-switcher {
+        position: fixed;
+        z-index: 10;
+        bottom: 16px;
+        left: 50%;
+        display: flex;
+        min-height: 43px;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 7px;
+        border: 1px solid rgb(255 255 255 / 12%);
+        border-radius: 999px;
+        color: #fff;
+        background: #263a30;
+        box-shadow: 0 8px 30px rgb(22 38 29 / 24%);
+        transform: translateX(-50%);
+      }
+      .variant-switcher button { display: grid; width: 31px; height: 31px; place-items: center; border: 0; border-radius: 50%; color: #fff; background: rgb(255 255 255 / 10%); cursor: pointer; font-size: 16px; }
+      .variant-switcher button:hover { background: rgb(255 255 255 / 20%); }
+      .variant-switcher span { min-width: 158px; text-align: center; font-size: 9px; font-weight: 700; }
+
+      @media (max-width: 920px) {
+        .variant-trailhead .app-page { grid-template-columns: 195px minmax(0, 1fr); gap: 14px; }
+        .fieldnotes-layout { grid-template-columns: minmax(0, 1fr) 270px; gap: 12px; }
+        .summit-body { grid-template-columns: minmax(0, 1fr) 235px; gap: 12px; }
+        .summit-rail .button { font-size: 10px; }
+      }
+      @media (max-width: 700px) {
+        .topbar { min-height: 59px; padding: 0 15px; }
+        .top-meta { display: none; }
+        .app-page, .variant-trailhead .app-page, .variant-fieldnotes .app-page, .variant-summit .app-page { width: min(100% - 28px, 580px); padding: 20px 0 102px; }
+        .variant-trailhead .app-page, .fieldnotes-layout, .summit-body { grid-template-columns: 1fr; }
+        .trailhead-sidebar { position: static; padding: 10px; }
+        .trailhead-sidebar .mountain-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .trailhead-sidebar .section-label { margin-left: 5px; }
+        .trailhead-sidebar .mountain-link { gap: 6px; padding: 8px 5px; }
+        .trailhead-sidebar .mountain-link strong { max-width: 115px; }
+        .sidebar-controls { justify-content: flex-start; margin-left: 5px; }
+        .page-heading { align-items: flex-start; }
+        .page-heading p { max-width: 360px; }
+        .fieldnotes-layout { display: flex; flex-direction: column-reverse; }
+        .fieldnotes-layout > * { width: 100%; }
+        .notes-side { display: grid; grid-template-columns: 1fr; }
+        .summit-rail { display: grid; grid-template-columns: 1fr 1fr; }
+        .summit-picker select { max-width: 42vw; }
+        .summit-hero { align-items: flex-start; flex-direction: column; }
+        .summit-stats { text-align: left; }
+        .summit-stat { text-align: left; }
+        .workspace-head { flex-direction: column; }
+        .workspace-actions { justify-content: flex-start; }
+        .view-toolbar { align-items: flex-start; flex-direction: column; }
+        .week-grid { gap: 4px; }
+        .week-grid .day-block { height: 72px; }
+        .week-grid .outside-day { min-height: 72px; }
+      }
+      @media (max-width: 420px) {
+        .prototype-note { font-size: 9px; }
+        .page-heading { flex-direction: column; }
+        .heading-actions { width: 100%; }
+        .heading-actions .button { flex: 1; }
+        .workspace-foot { align-items: flex-start; flex-direction: column; }
+        .agenda-day { grid-template-columns: 48px minmax(0, 1fr); gap: 9px; }
+        .summit-rail { grid-template-columns: 1fr; }
+        .summit-header { align-items: flex-start; flex-direction: column; }
+        .summit-picker select { max-width: 68vw; }
+        .week-controls strong { min-width: 105px; }
+        .week-grid .day-block { height: 63px; }
+        .week-grid .day-block .day-number { font-size: 15px; }
+        .variant-switcher span { min-width: 140px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="prototype-note">THROWAWAY OWNER-FLOW PROTOTYPE · Sample data resets when this page reloads</div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">▲</span><span>mountain</span></div>
+      <div class="top-meta">A private space for the days you're building</div>
+      <div class="top-user"><span class="avatar" aria-hidden="true">B</span><span>Brian's workspace</span></div>
+    </header>
+    <main id="app" aria-live="polite"></main>
+    <dialog id="modal" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <nav class="variant-switcher" aria-label="Prototype variations">
+      <button type="button" data-action="variant-previous" aria-label="Previous variation">‹</button>
+      <span id="variant-label"></span>
+      <button type="button" data-action="variant-next" aria-label="Next variation">›</button>
+    </nav>
+    <script>
+      // Three radically different owner dashboards, switchable with ?variant=trailhead|fieldnotes|summit.
+      const VARIANTS = [
+        { key: "trailhead", name: "Trailhead · Sidebar + weekly workspace" },
+        { key: "fieldnotes", name: "Fieldnotes · Library + activity journal" },
+        { key: "summit", name: "Summit · Pyramid-first control room" }
+      ];
+      const DAY_MS = 86400000;
+      const app = document.getElementById("app");
+      const modal = document.getElementById("modal");
+      const dialogContent = document.getElementById("dialog-content");
+      const toast = document.getElementById("toast");
+      const variantLabel = document.getElementById("variant-label");
+      let toastTimer = 0;
+      let state = {
+        variant: readVariant(),
+        library: "active",
+        view: "week",
+        selectedWeekStart: "",
+        selectedId: "morning-pages",
+        showPublicPreview: false,
+        mountains: seedMountains()
+      };
+
+      function readVariant() {
+        const key = new URLSearchParams(location.search).get("variant");
+        return VARIANTS.some(variant => variant.key === key) ? key : "trailhead";
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, character => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[character]);
+      }
+
+      function dateFromIso(iso) {
+        const [year, month, day] = iso.split("-").map(Number);
+        return new Date(Date.UTC(year, month - 1, day));
+      }
+
+      function isoFromDate(date) {
+        return date.toISOString().slice(0, 10);
+      }
+
+      function addDays(iso, amount) {
+        return isoFromDate(new Date(dateFromIso(iso).getTime() + amount * DAY_MS));
+      }
+
+      function daysBetween(start, end) {
+        return Math.round((dateFromIso(end) - dateFromIso(start)) / DAY_MS);
+      }
+
+      function formatDate(iso, options = { month: "short", day: "numeric" }) {
+        return new Intl.DateTimeFormat("en", { ...options, timeZone: "UTC" }).format(dateFromIso(iso));
+      }
+
+      function triangleRows(dayCount) {
+        let rows = Math.ceil((Math.sqrt(8 * dayCount + 1) - 1) / 2);
+        while (rows * (rows + 1) / 2 < dayCount) rows += 1;
+        while (rows > 1 && (rows - 1) * rows / 2 >= dayCount) rows -= 1;
+        return rows;
+      }
+
+      function adjustedRange(start, end) {
+        if (!start || !end || start > end) return null;
+        const requestedDays = daysBetween(start, end) + 1;
+        const rows = triangleRows(requestedDays);
+        const totalDays = rows * (rows + 1) / 2;
+        const adjustedStart = addDays(end, -(totalDays - 1));
+        return { start: adjustedStart, end, requestedDays, totalDays, rows, addedDays: totalDays - requestedDays };
+      }
+
+      function mondayOf(iso) {
+        const weekday = dateFromIso(iso).getUTCDay();
+        return addDays(iso, -((weekday + 6) % 7));
+      }
+
+      function localTodayIso() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      }
+
+      function initialWeek(mountain) {
+        const today = localTodayIso();
+        if (today < mountain.start) return mondayOf(mountain.start);
+        if (today > mountain.end) return mondayOf(mountain.end);
+        return mondayOf(today);
+      }
+
+      function daysInMountain(mountain) {
+        return daysBetween(mountain.start, mountain.end) + 1;
+      }
+
+      function visibleActivities(mountain) {
+        return Object.entries(mountain.activities)
+          .filter(([date, entries]) => date >= mountain.start && date <= mountain.end && entries.length)
+          .sort(([a], [b]) => a.localeCompare(b));
+      }
+
+      function activityCount(mountain) {
+        return visibleActivities(mountain).reduce((sum, [, entries]) => sum + entries.length, 0);
+      }
+
+      function completionCount(mountain) {
+        return visibleActivities(mountain).length;
+      }
+
+      function createToken() {
+        return "mtn-" + Array.from(crypto.getRandomValues(new Uint8Array(9)), byte => byte.toString(16).padStart(2, "0")).join("");
+      }
+
+      function seedMountains() {
+        return [
+          {
+            id: "morning-pages",
+            name: "Morning pages",
+            start: "2026-09-14",
+            end: "2026-09-28",
+            archived: false,
+            shareToken: createToken(),
+            activities: {
+              "2026-09-14": ["Read 12 pages"],
+              "2026-09-15": ["Read 12 pages", "Write a short reflection"],
+              "2026-09-17": ["Read 20 pages"],
+              "2026-09-18": ["Read 10 pages"],
+              "2026-09-20": ["Read 16 pages"],
+              "2026-09-21": ["Read 12 pages"],
+              "2026-09-23": ["Read 18 pages"],
+              "2026-09-25": ["Read 10 pages"],
+              "2026-09-26": ["Read 15 pages"]
+            }
+          },
+          {
+            id: "autumn-miles",
+            name: "Autumn miles",
+            start: "2026-08-31",
+            end: "2026-09-20",
+            archived: false,
+            shareToken: "",
+            activities: {
+              "2026-09-01": ["Walked the river loop"],
+              "2026-09-03": ["Easy 2-mile run"],
+              "2026-09-05": ["Long run · 5 miles"],
+              "2026-09-08": ["Walked after dinner"],
+              "2026-09-10": ["Easy 3-mile run"],
+              "2026-09-13": ["Long run · 6 miles"],
+              "2026-09-16": ["Recovery walk"]
+            }
+          },
+          {
+            id: "piano-practice",
+            name: "Piano, one song at a time",
+            start: "2026-09-21",
+            end: "2026-09-30",
+            archived: true,
+            shareToken: createToken(),
+            activities: {
+              "2026-09-21": ["Practice C major scale"],
+              "2026-09-22": ["Learn the first four bars"],
+              "2026-09-24": ["Practice hands separately"]
+            }
+          }
+        ];
+      }
+
+      function selectedMountain() {
+        return state.mountains.find(mountain => mountain.id === state.selectedId) || null;
+      }
+
+      function pickMountain(id) {
+        const mountain = state.mountains.find(item => item.id === id);
+        if (!mountain) return;
+        state.selectedId = id;
+        state.view = "week";
+        state.selectedWeekStart = initialWeek(mountain);
+        state.showPublicPreview = false;
+        render();
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("visible");
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2500);
+      }
+
+      function setVariant(index) {
+        const next = (index + VARIANTS.length) % VARIANTS.length;
+        state.variant = VARIANTS[next].key;
+        const url = new URL(location.href);
+        url.searchParams.set("variant", state.variant);
+        history.replaceState(null, "", url);
+        render();
+      }
+
+      function mountainRows() {
+        return state.mountains.filter(mountain => state.library === "archived" ? mountain.archived : !mountain.archived);
+      }
+
+      function libraryTabs() {
+        const activeCount = state.mountains.filter(mountain => !mountain.archived).length;
+        const archivedCount = state.mountains.filter(mountain => mountain.archived).length;
+        return `<div class="library-tabs" role="group" aria-label="Mountain status">
+          <button type="button" data-action="set-library" data-library="active" aria-pressed="${state.library === "active"}">Active ${activeCount}</button>
+          <button type="button" data-action="set-library" data-library="archived" aria-pressed="${state.library === "archived"}">Archived ${archivedCount}</button>
+        </div>`;
+      }
+
+      function mountainLink(mountain, variant = "") {
+        const selected = mountain.id === state.selectedId;
+        const archived = mountain.archived;
+        const days = daysInMountain(mountain);
+        return `<button class="mountain-link${selected ? " selected" : ""}${archived ? " archive-link" : ""}" type="button" data-action="select-mountain" data-id="${escapeHtml(mountain.id)}">
+          <span class="mountain-glyph" aria-hidden="true">${archived ? "◌" : "▲"}</span>
+          <span><strong>${escapeHtml(mountain.name)}</strong><small>${days} days · ${completionCount(mountain)} complete${archived ? " · archived" : ""}</small></span>
+        </button>`;
+      }
+
+      function libraryItem(mountain) {
+        const selected = mountain.id === state.selectedId;
+        const percent = Math.round(completionCount(mountain) / daysInMountain(mountain) * 100);
+        return `<button class="library-item${selected ? " selected" : ""}" type="button" data-action="select-mountain" data-id="${escapeHtml(mountain.id)}">
+          <span class="mountain-glyph" aria-hidden="true">${mountain.archived ? "◌" : "▲"}</span>
+          <span><strong>${escapeHtml(mountain.name)}</strong><small>${formatDate(mountain.start)} – ${formatDate(mountain.end)}${mountain.archived ? " · archived" : ""}</small></span>
+          <span class="progress">${percent}%</span>
+        </button>`;
+      }
+
+      function dateSpan(mountain) {
+        return `${formatDate(mountain.start, { month: "short", day: "numeric", year: "numeric" })} – ${formatDate(mountain.end, { month: "short", day: "numeric", year: "numeric" })}`;
+      }
+
+      function statusPill(mountain) {
+        if (mountain.archived) return `<span class="pill archive">Archived · read-only</span>`;
+        return mountain.shareToken
+          ? `<span class="pill">● Public link on</span>`
+          : `<span class="pill private">Private</span>`;
+      }
+
+      function viewSwitch() {
+        return `<div class="view-switch" role="group" aria-label="Pyramid view">
+          <button type="button" data-action="set-view" data-view="week" aria-pressed="${state.view === "week"}">This week</button>
+          <button type="button" data-action="set-view" data-view="whole" aria-pressed="${state.view === "whole"}">Whole pyramid</button>
+        </div>`;
+      }
+
+      function weekControls(mountain, prefix = "") {
+        const currentStart = state.selectedWeekStart || mondayOf(mountain.end);
+        const weekEnd = addDays(currentStart, 6);
+        const label = `${formatDate(currentStart, { month: "short", day: "numeric" })} – ${formatDate(weekEnd, { month: "short", day: "numeric", year: "numeric" })}`;
+        const minWeek = mondayOf(mountain.start);
+        const maxWeek = mondayOf(mountain.end);
+        return `<div class="${prefix}week-controls">
+          <button class="icon-button" type="button" data-action="week-shift" data-delta="-7" aria-label="Previous week"${currentStart <= minWeek ? " disabled" : ""}>‹</button>
+          <strong>${label}<span>Monday – Sunday</span></strong>
+          <button class="icon-button" type="button" data-action="week-shift" data-delta="7" aria-label="Next week"${currentStart >= maxWeek ? " disabled" : ""}>›</button>
+        </div>`;
+      }
+
+      function dayBlock(mountain, iso, outside = false) {
+        const activities = mountain.activities[iso] || [];
+        const disabled = outside || mountain.archived;
+        const label = `${formatDate(iso, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}${activities.length ? `, ${activities.length} ${activities.length === 1 ? "activity" : "activities"}` : ", no activities"}${mountain.archived ? ", archived read-only" : ""}`;
+        return `<button class="day-block${activities.length ? " has-activities" : ""}${outside ? " outside" : ""}" type="button" data-action="open-day" data-date="${iso}" aria-label="${escapeHtml(label)}"${disabled ? " disabled" : ""}>
+          <span class="day-number">${dateFromIso(iso).getUTCDate()}</span>
+          <span class="day-month">${formatDate(iso, { month: "short" })}</span>
+          ${activities.length ? `<span class="activity-dot" aria-hidden="true"></span>` : ""}
+        </button>`;
+      }
+
+      function renderPyramid(mountain) {
+        const total = daysInMountain(mountain);
+        const rows = triangleRows(total);
+        const parts = [];
+        if (state.view === "whole") {
+          let dayIndex = 0;
+          for (let rowSize = 1; rowSize <= rows; rowSize += 1) {
+            const blocks = [];
+            for (let index = 0; index < rowSize; index += 1) {
+              blocks.push(dayBlock(mountain, addDays(mountain.start, dayIndex++)));
+            }
+            parts.push(`<div class="pyramid-row">${blocks.join("")}</div>`);
+          }
+          return `<div class="pyramid" aria-label="Whole ${rows}-row pyramid">${parts.join("")}</div>`;
+        }
+
+        const start = state.selectedWeekStart || mondayOf(mountain.end);
+        const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const cells = labels.map((label, index) => {
+          const iso = addDays(start, index);
+          const outside = iso < mountain.start || iso > mountain.end;
+          const activities = mountain.activities[iso] || [];
+          const caption = activities.length
+            ? `${activities.length} ${activities.length === 1 ? "activity" : "activities"}`
+            : outside ? "Outside dates" : "No activities";
+          return `<div class="week-day"><span class="week-day-label">${label}</span>${outside
+            ? `<div class="outside-day" aria-label="${escapeHtml(formatDate(iso, { weekday: "long", month: "long", day: "numeric" }))}, outside Mountain dates"></div>`
+            : dayBlock(mountain, iso)}<span class="day-caption">${caption}</span></div>`;
+        });
+        return `<div class="week-grid">${cells.join("")}</div>`;
+      }
+
+      function workspaceVisualization(mountain, variantClass = "") {
+        const controls = state.view === "week" ? weekControls(mountain) : `<span class="muted small">${daysInMountain(mountain)} days · ${triangleRows(daysInMountain(mountain))} rows</span>`;
+        return `<div class="${variantClass}visualization">${renderPyramid(mountain)}</div>`;
+      }
+
+      function sidebarForTrailhead() {
+        const mountains = mountainRows();
+        return `<aside class="trailhead-sidebar card">
+          <div class="sidebar-head"><strong>Your Mountains</strong><button class="icon-button" type="button" data-action="open-create" aria-label="Create a Mountain">+</button></div>
+          <div class="sidebar-controls">${libraryTabs()}</div>
+          <div class="mountain-list">${mountains.length ? mountains.map(item => mountainLink(item)).join("") : `<div class="empty-library">No ${state.library} Mountains yet.</div>`}</div>
+          <p class="section-label">Your data</p>
+          <p class="small muted" style="padding:0 6px;line-height:1.55">Each Mountain is private until you turn on a read-only share link.</p>
+        </aside>`;
+      }
+
+      function renderTrailhead(mountain) {
+        return `<div class="variant-trailhead">
+          <div class="app-page">
+            ${sidebarForTrailhead()}
+            <section class="trailhead-main">
+              <header class="trailhead-heading">
+                <p class="eyebrow">Your space</p>
+                <h1>Keep moving, one day at a time.</h1>
+                <p class="muted small">Pick a Mountain to see the work you've already put in.</p>
+              </header>
+              ${mountain ? `<section class="mountain-workspace card" aria-label="Selected Mountain">
+                <div class="workspace-head">
+                  <div class="workspace-title"><h2>${escapeHtml(mountain.name)}</h2><p>${dateSpan(mountain)} · peak day is ${formatDate(mountain.end, { month: "long", day: "numeric" })}</p></div>
+                  <div class="workspace-actions">${statusPill(mountain)}<button class="button" type="button" data-action="open-manage">Manage</button><button class="button primary" type="button" data-action="open-day" data-date="${mountain.end}"${mountain.archived ? " disabled" : ""}>+ Log activity</button></div>
+                </div>
+                <div class="view-toolbar">${viewSwitch()}${state.view === "week" ? weekControls(mountain) : `<span class="muted small">${daysInMountain(mountain)} days · ${triangleRows(daysInMountain(mountain))} rows</span>`}</div>
+                ${workspaceVisualization(mountain)}
+                <div class="workspace-foot"><span>${completionCount(mountain)} green completion days · ${activityCount(mountain)} activities logged</span><span>${mountain.archived ? "Archived Mountains are read-only; their share link stays active." : "Tap any day to add, rename, or remove activity text."}</span></div>
+              </section>` : emptyMountainPrompt()}
+            </section>
+          </div>
+        </div>`;
+      }
+
+      function renderFieldnotes(mountain) {
+        const mountains = mountainRows();
+        const agenda = mountain ? renderAgenda(mountain) : emptyMountainPrompt();
+        return `<div class="variant-fieldnotes">
+          <div class="app-page">
+            <header class="page-heading">
+              <div><p class="eyebrow">Owner workspace</p><h1>Your Mountains, in motion.</h1><p>Start from the collection. Open a Mountain to see its week as a running journal—or step back and take in the whole pyramid.</p></div>
+              <div class="heading-actions"><button class="button primary" type="button" data-action="open-create">＋ New Mountain</button></div>
+            </header>
+            <div class="fieldnotes-layout">
+              <section class="notes-card card">
+                ${mountain ? `<div class="notes-head"><div><p class="eyebrow">Activity journal · ${statusPill(mountain)}</p><h2>${escapeHtml(mountain.name)}</h2><p>${dateSpan(mountain)} · ${daysInMountain(mountain)} days shaping toward the peak</p></div><button class="button" type="button" data-action="open-manage">Mountain details</button></div>
+                  <div class="notes-toolbar">${viewSwitch()}${state.view === "week" ? weekControls(mountain, "notes-") : `<span class="muted small">${daysInMountain(mountain)} days · ${triangleRows(daysInMountain(mountain))} rows</span>`}</div>
+                  ${state.view === "week" ? agenda : `<div class="visualization">${renderPyramid(mountain)}</div>`}
+                ` : `<div class="library-empty-main">${emptyMountainPrompt()}</div>`}
+              </section>
+              <aside class="notes-side">
+                <section class="library-card card">
+                  <div class="library-heading"><h2>Mountain collection</h2>${libraryTabs()}</div>
+                  <div class="library-list">${mountains.length ? mountains.map(libraryItem).join("") : `<div class="empty-library"><strong>No ${state.library} Mountains</strong>Create one to get started.</div>`}</div>
+                  <button class="button" style="width:100%;margin-top:10px" type="button" data-action="open-create">＋ Create a Mountain</button>
+                </section>
+                ${mountain ? `<section class="summary-card card">
+                  <div class="summary-stat"><strong>${completionCount(mountain)}</strong><span>green days</span></div>
+                  <div class="summary-stat"><strong>${activityCount(mountain)}</strong><span>activities</span></div>
+                  <div class="summary-stat"><strong>${triangleRows(daysInMountain(mountain))}</strong><span>pyramid rows</span></div>
+                </section>
+                <section class="library-card card"><div class="library-heading"><h2>Visibility</h2>${mountain.shareToken ? `<span class="pill">Link on</span>` : `<span class="pill private">Private</span>`}</div><p class="small muted" style="line-height:1.55">Your Mountain is ${mountain.shareToken ? "visible to anyone with its unguessable, revocable link." : "private. You decide if and when to share it."}</p><button class="button" type="button" data-action="open-share">Manage sharing</button></section>` : ""}
+              </aside>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      function renderAgenda(mountain) {
+        const start = state.selectedWeekStart || mondayOf(mountain.end);
+        const days = [];
+        for (let index = 0; index < 7; index += 1) {
+          const iso = addDays(start, index);
+          if (iso < mountain.start || iso > mountain.end) continue;
+          const entries = mountain.activities[iso] || [];
+          days.push(`<article class="agenda-day">
+            <div class="agenda-date">${formatDate(iso, { weekday: "short" })}<strong>${dateFromIso(iso).getUTCDate()}</strong>${formatDate(iso, { month: "short" })}</div>
+            <div><div class="agenda-entries">${entries.length ? entries.map(entry => `<div class="agenda-entry">${escapeHtml(entry)}</div>`).join("") : `<div class="agenda-empty">Nothing logged for this day yet.</div>`}</div>
+              <button class="agenda-add" type="button" data-action="open-day" data-date="${iso}"${mountain.archived ? " disabled" : ""}>${entries.length ? "Edit day" : "+ Add activity"}</button>
+            </div>
+          </article>`);
+        }
+        return `<div class="notes-feed">${days.join("")}</div>`;
+      }
+
+      function renderSummit(mountain) {
+        const mountains = state.mountains.filter(item => state.library === "archived" ? item.archived : !item.archived);
+        const all = state.mountains;
+        const days = mountain ? daysInMountain(mountain) : 0;
+        const completed = mountain ? completionCount(mountain) : 0;
+        const percent = days ? Math.round(completed / days * 100) : 0;
+        return `<div class="variant-summit">
+          <div class="app-page">
+            <header class="summit-header">
+              <div class="summit-picker"><span class="brand-mark" aria-hidden="true">▲</span>
+                <select aria-label="Choose a Mountain" data-action="pick-select">${all.map(item => `<option value="${escapeHtml(item.id)}"${item.id === state.selectedId ? " selected" : ""}>${escapeHtml(item.name)}${item.archived ? " · archived" : ""}</option>`).join("")}</select>
+                <span class="pill">${state.library === "active" ? `${all.filter(item => !item.archived).length} active` : `${all.filter(item => item.archived).length} archived`}</span>
+              </div>
+              <div class="heading-actions"><button class="button" type="button" data-action="open-library">Mountain library</button><button class="button primary" type="button" data-action="open-create">＋ New Mountain</button></div>
+            </header>
+            ${mountain ? `<div class="summit-body">
+              <section class="summit-main">
+                <div class="summit-hero"><div><p class="eyebrow">${mountain.archived ? "Archived Mountain · read-only" : "Your current climb"}</p><h1>${escapeHtml(mountain.name)}</h1><p>${dateSpan(mountain)} · the end date is your peak</p></div>
+                  <div class="summit-stats"><div class="summit-stat"><strong>${completed}</strong><span>green days</span></div><div class="summit-stat"><strong>${activityCount(mountain)}</strong><span>activities</span></div><div class="summit-stat"><strong>${days}</strong><span>days</span></div></div>
+                </div>
+                <section class="summit-display">
+                  <div class="summit-display-top">${viewSwitch()}${state.view === "week" ? weekControls(mountain) : `<span class="muted small">${triangleRows(days)} rows · every day to the peak</span>`}</div>
+                  ${workspaceVisualization(mountain)}
+                </section>
+              </section>
+              <aside class="summit-rail">
+                <section class="rail-card card"><div class="rail-heading"><h2>Mountain details</h2>${statusPill(mountain)}</div>
+                  <div class="range-line"><span>Starts</span><strong>${formatDate(mountain.start, { month: "short", day: "numeric", year: "numeric" })}</strong></div>
+                  <div class="range-line"><span>Peak day</span><strong>${formatDate(mountain.end, { month: "short", day: "numeric", year: "numeric" })}</strong></div>
+                  <div class="range-line"><span>Shape</span><strong>${days} days · ${triangleRows(days)} rows</strong></div>
+                  <div class="completion-bar" aria-label="${percent}% of days complete"><span style="width:${percent}%"></span></div>
+                  <span class="muted" style="font-size:8px">${percent}% of days have activity</span>
+                </section>
+                <section class="rail-card card"><div class="rail-heading"><h2>Owner actions</h2></div>
+                  <div class="rail-actions">${mountain.archived
+                    ? `<button class="button" type="button" data-action="restore-mountain">↶ Restore Mountain</button>`
+                    : `<button class="button primary" type="button" data-action="open-day" data-date="${mountain.end}">＋ Log activity</button><button class="button" type="button" data-action="open-dates">Edit date range</button><button class="button" type="button" data-action="archive-mountain">Archive Mountain</button>`}
+                    <button class="button" type="button" data-action="open-share">◎ ${mountain.shareToken ? "Manage public link" : "Enable public link"}</button>
+                    <button class="button danger" type="button" data-action="delete-mountain">Delete permanently</button>
+                  </div>
+                </section>
+                <section class="rail-card card"><div class="rail-heading"><h2>Library</h2>${libraryTabs()}</div>
+                  <div class="library-list">${mountains.length ? mountains.map(libraryItem).join("") : `<div class="empty-library">No ${state.library} Mountains.</div>`}</div>
+                </section>
+              </aside>
+            </div>` : `<div class="library-empty-main">${emptyMountainPrompt()}</div>`}
+          </div>
+        </div>`;
+      }
+
+      function emptyMountainPrompt() {
+        return `<div class="empty-selection"><div class="empty-mark" aria-hidden="true">▲</div><h2 class="serif">No Mountain selected</h2><p>Create a Mountain with the dates you're working toward. Your dates and activity text stay private unless you enable a public link.</p><button class="button primary" type="button" data-action="open-create">＋ Create a Mountain</button></div>`;
+      }
+
+      function render() {
+        const mountain = selectedMountain();
+        if (mountain && !state.selectedWeekStart) state.selectedWeekStart = initialWeek(mountain);
+        const view = state.variant === "fieldnotes"
+          ? renderFieldnotes(mountain)
+          : state.variant === "summit"
+            ? renderSummit(mountain)
+            : renderTrailhead(mountain);
+        app.className = `variant-${state.variant}`;
+        app.innerHTML = view;
+        const variant = VARIANTS.find(item => item.key === state.variant);
+        variantLabel.textContent = `${VARIANTS.indexOf(variant) + 1}/3 · ${variant.name}`;
+      }
+
+      function dialogHeader(title, subtitle = "") {
+        return `<header class="dialog-head"><div><h2 id="dialog-title">${escapeHtml(title)}</h2>${subtitle ? `<p>${subtitle}</p>` : ""}</div><button class="icon-button" type="button" data-action="close-dialog" aria-label="Close">×</button></header>`;
+      }
+
+      function openDialog(content) {
+        dialogContent.innerHTML = `<div class="dialog-content">${content}</div>`;
+        modal.showModal();
+      }
+
+      function closeDialog() {
+        if (modal.open) modal.close();
+      }
+
+      function showCreateDialog() {
+        const today = localTodayIso();
+        const end = addDays(today, 14);
+        const start = addDays(end, -14);
+        openDialog(`${dialogHeader("Create a Mountain", "Choose the dates you want to build around. The end date stays at the pyramid's peak.")}
+          <form id="create-form">
+            <label class="field"><span>Mountain name</span><input name="name" maxlength="70" required placeholder="e.g. Learn a new song"></label>
+            <div class="form-grid">
+              <label class="field"><span>Start date</span><input name="start" type="date" value="${start}" required></label>
+              <label class="field"><span>End date · peak</span><input name="end" type="date" value="${end}" required></label>
+            </div>
+            <div class="range-preview" data-range-preview></div>
+            <p class="form-error" data-form-error role="alert"></p>
+            <div class="dialog-notice">Mountains are private by default. You can turn on a read-only public link later.</div>
+            <div class="dialog-actions"><button class="button" type="button" data-action="close-dialog">Cancel</button><button class="button primary" type="submit">Create Mountain</button></div>
+          </form>`);
+        updateRangePreview();
+      }
+
+      function showDatesDialog() {
+        const mountain = selectedMountain();
+        if (!mountain || mountain.archived) return;
+        openDialog(`${dialogHeader("Edit date range", "Keep the peak date you choose; the start adjusts earlier when a complete pyramid needs more days.")}
+          <form id="dates-form">
+            <div class="form-grid">
+              <label class="field"><span>Start date</span><input name="start" type="date" value="${mountain.start}" required></label>
+              <label class="field"><span>End date · peak</span><input name="end" type="date" value="${mountain.end}" required></label>
+            </div>
+            <div class="range-preview" data-range-preview></div>
+            <p class="form-error" data-form-error role="alert"></p>
+            <div class="dialog-notice">Activity entries outside the edited dates are kept, just hidden. They reappear if you expand the range again.</div>
+            <div class="dialog-actions"><button class="button" type="button" data-action="close-dialog">Cancel</button><button class="button primary" type="submit">Save dates</button></div>
+          </form>`);
+        updateRangePreview();
+      }
+
+      function updateRangePreview() {
+        const startInput = dialogContent.querySelector('[name="start"]');
+        const endInput = dialogContent.querySelector('[name="end"]');
+        const preview = dialogContent.querySelector("[data-range-preview]");
+        if (!startInput || !endInput || !preview) return;
+        const range = adjustedRange(startInput.value, endInput.value);
+        if (!range) {
+          preview.textContent = "Choose a valid date range.";
+          return;
+        }
+        preview.innerHTML = range.addedDays
+          ? `<strong>${range.totalDays} days · ${range.rows} rows</strong><br>${range.requestedDays} selected days; start moves back ${range.addedDays} ${range.addedDays === 1 ? "day" : "days"}.`
+          : `<strong>${range.totalDays} days · ${range.rows} rows</strong><br>Your selected range already forms a complete pyramid.`;
+      }
+
+      function showFormError(form, message) {
+        const error = form.querySelector("[data-form-error]");
+        if (!error) return;
+        error.textContent = message;
+        error.classList.toggle("visible", Boolean(message));
+      }
+
+      function showDayDialog(iso) {
+        const mountain = selectedMountain();
+        if (!mountain) return;
+        const entries = mountain.activities[iso] || [];
+        const readonly = mountain.archived;
+        const entryMarkup = entries.length ? entries.map((entry, index) => `<div class="activity-item"><span>${escapeHtml(entry)}</span>${readonly ? "" : `<span class="activity-item-actions"><button class="button" type="button" data-action="rename-activity" data-date="${iso}" data-index="${index}">Rename</button><button class="button danger" type="button" data-action="delete-activity" data-date="${iso}" data-index="${index}">Delete</button></span>`}</div>`).join("") : `<div class="activity-empty">No activity text for this day yet.</div>`;
+        openDialog(`${dialogHeader(formatDate(iso, { weekday: "long", month: "long", day: "numeric", year: "numeric" }), readonly ? "Archived Mountains are read-only." : "Keep each activity short and specific; a day can hold more than one.")}
+          ${readonly ? "" : `<form class="activity-form" id="activity-form"><input name="text" maxlength="180" required placeholder="What did you do?"><button class="button primary" type="submit">Add</button><input type="hidden" name="date" value="${iso}"></form><p class="form-error" data-form-error role="alert"></p>`}
+          <p class="section-label">Activity text · ${entries.length}</p><div class="activity-list">${entryMarkup}</div>
+          <div class="dialog-actions"><button class="button" type="button" data-action="close-dialog">Done</button></div>`);
+      }
+
+      function publicPreview(mountain) {
+        if (!state.showPublicPreview) return "";
+        const dayButtons = [];
+        const total = Math.min(daysInMountain(mountain), 45);
+        for (let index = 0; index < total; index += 1) {
+          const iso = addDays(mountain.start, index);
+          const hasEntries = (mountain.activities[iso] || []).length > 0;
+          dayButtons.push(`<span class="public-day${hasEntries ? " complete" : ""}">${dateFromIso(iso).getUTCDate()} ${formatDate(iso, { month: "short" })}</span>`);
+        }
+        const entries = visibleActivities(mountain);
+        return `<div class="public-preview"><h3>${escapeHtml(mountain.name)}</h3><p>${dateSpan(mountain)} · Public, read-only view</p><div class="public-days">${dayButtons.join("")}</div>
+          <div class="public-entries">${entries.length ? entries.map(([date, texts]) => `<div><strong>${formatDate(date, { month: "short", day: "numeric" })}</strong> · ${texts.map(escapeHtml).join(" · ")}</div>`).join("") : `<span>No activities have been shared yet.</span>`}</div>
+        </div>`;
+      }
+
+      function showShareDialog() {
+        const mountain = selectedMountain();
+        if (!mountain) return;
+        const shareUrl = mountain.shareToken ? `https://mountain.example/share/${mountain.shareToken}` : "";
+        const title = mountain.shareToken ? "Public link is on" : "Mountain is private";
+        openDialog(`${dialogHeader("Sharing · " + mountain.name, "The public page is read-only. Anyone with its link can open it without an account.")}
+          <div class="dialog-notice">${mountain.shareToken
+            ? `This unguessable link has no expiry. ${mountain.archived ? "Archiving does not turn the link off." : "Revoke or rotate it any time."}`
+            : "Only you can see this Mountain until you enable a link."}</div>
+          <span class="pill${mountain.shareToken ? "" : " private"}">${mountain.shareToken ? "● " + title : title}</span>
+          ${mountain.shareToken ? `<div class="share-url"><input id="share-url" aria-label="Public share URL" readonly value="${escapeHtml(shareUrl)}"><button class="button" type="button" data-action="select-share-url">Select link</button></div>
+            <button class="button" type="button" data-action="toggle-public-preview">${state.showPublicPreview ? "Hide public preview" : "Preview public page"}</button>
+            ${publicPreview(mountain)}
+            <div class="dialog-actions"><button class="button danger" type="button" data-action="revoke-share">Revoke link</button><button class="button" type="button" data-action="rotate-share">Rotate link</button><button class="button" type="button" data-action="close-dialog">Done</button></div>`
+            : `<div class="dialog-actions"><button class="button" type="button" data-action="close-dialog">Cancel</button><button class="button primary" type="button" data-action="enable-share">Enable public link</button></div>`}`);
+      }
+
+      function showManageDialog() {
+        const mountain = selectedMountain();
+        if (!mountain) return;
+        openDialog(`${dialogHeader(mountain.name, mountain.archived ? "Archived · read-only. Its share link, if enabled, stays active." : "Manage this Mountain and its visibility.")}
+          <div class="range-line"><span>Date range</span><strong>${dateSpan(mountain)}</strong></div>
+          <div class="range-line"><span>Activities</span><strong>${activityCount(mountain)} across ${completionCount(mountain)} green days</strong></div>
+          <div class="range-line"><span>Visibility</span><strong>${mountain.shareToken ? "Public read-only link on" : "Private"}</strong></div>
+          <div class="rail-actions" style="margin-top:15px">
+            ${mountain.archived ? `<button class="button" type="button" data-action="restore-mountain">↶ Restore Mountain</button>` : `<button class="button" type="button" data-action="open-dates">Edit date range</button><button class="button" type="button" data-action="archive-mountain">Archive Mountain · read-only</button>`}
+            <button class="button" type="button" data-action="open-share">◎ Manage share link</button>
+            <button class="button danger" type="button" data-action="delete-mountain">Delete Mountain permanently</button>
+          </div>
+          <div class="dialog-actions"><button class="button" type="button" data-action="close-dialog">Done</button></div>`);
+      }
+
+      function showConfirmDialog(title, message, confirmLabel, confirmAction, danger = false) {
+        openDialog(`${dialogHeader(title)}
+          <p class="muted small" style="line-height:1.6">${message}</p>
+          <div class="dialog-actions"><button class="button" type="button" data-action="close-dialog">Cancel</button><button class="button${danger ? " danger" : " primary"}" type="button" data-action="${confirmAction}">${confirmLabel}</button></div>`);
+      }
+
+      function shiftWeek(amount) {
+        const mountain = selectedMountain();
+        if (!mountain) return;
+        const min = mondayOf(mountain.start);
+        const max = mondayOf(mountain.end);
+        const next = addDays(state.selectedWeekStart || max, amount);
+        state.selectedWeekStart = next < min ? min : next > max ? max : next;
+        render();
+      }
+
+      function openLibrary() {
+        state.library = state.library === "active" ? "archived" : "active";
+        render();
+      }
+
+      function handleClick(event) {
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
+        const action = target.dataset.action;
+        const mountain = selectedMountain();
+        switch (action) {
+          case "variant-previous": setVariant(VARIANTS.findIndex(item => item.key === state.variant) - 1); break;
+          case "variant-next": setVariant(VARIANTS.findIndex(item => item.key === state.variant) + 1); break;
+          case "select-mountain": pickMountain(target.dataset.id); break;
+          case "set-library":
+            state.library = target.dataset.library;
+            if (state.library === "archived" && mountain && !mountain.archived) {
+              const archived = state.mountains.find(item => item.archived);
+              if (archived) pickMountain(archived.id);
+              else render();
+            } else if (state.library === "active" && mountain && mountain.archived) {
+              const active = state.mountains.find(item => !item.archived);
+              if (active) pickMountain(active.id);
+              else render();
+            } else render();
+            break;
+          case "pick-select": break;
+          case "open-create": showCreateDialog(); break;
+          case "open-day": if (target.dataset.date && mountain) showDayDialog(target.dataset.date); break;
+          case "open-dates": closeDialog(); showDatesDialog(); break;
+          case "open-share": state.showPublicPreview = false; closeDialog(); showShareDialog(); break;
+          case "open-manage": showManageDialog(); break;
+          case "set-view": state.view = target.dataset.view; render(); break;
+          case "open-pyramid": state.view = "whole"; render(); break;
+          case "week-shift": shiftWeek(Number(target.dataset.delta)); break;
+          case "close-dialog": closeDialog(); break;
+          case "archive-mountain":
+            if (mountain && !mountain.archived) showConfirmDialog("Archive this Mountain?", "It becomes read-only and moves to Archived. Any public link stays active; you can restore it later.", "Archive Mountain", "confirm-archive");
+            break;
+          case "confirm-archive":
+            if (mountain) {
+              mountain.archived = true;
+              state.library = "archived";
+              closeDialog();
+              render();
+              showToast("Mountain archived. Its share link is still active.");
+            }
+            break;
+          case "restore-mountain":
+            if (mountain && mountain.archived) {
+              mountain.archived = false;
+              state.library = "active";
+              closeDialog();
+              render();
+              showToast("Mountain restored and ready to edit.");
+            }
+            break;
+          case "delete-mountain":
+            if (mountain) showConfirmDialog("Permanently delete this Mountain?", "This permanently removes its date range and every activity. This cannot be undone.", "Delete permanently", "confirm-delete", true);
+            break;
+          case "confirm-delete":
+            if (mountain) {
+              state.mountains = state.mountains.filter(item => item.id !== mountain.id);
+              const next = state.mountains.find(item => !item.archived) || state.mountains[0] || null;
+              state.selectedId = next ? next.id : "";
+              state.library = next && next.archived ? "archived" : "active";
+              state.selectedWeekStart = next ? initialWeek(next) : "";
+              closeDialog();
+              render();
+              showToast("Mountain and its activities permanently deleted.");
+            }
+            break;
+          case "enable-share":
+            if (mountain) {
+              mountain.shareToken = createToken();
+              closeDialog();
+              showShareDialog();
+              showToast("Public read-only link enabled.");
+            }
+            break;
+          case "rotate-share":
+            if (mountain && mountain.shareToken) {
+              mountain.shareToken = createToken();
+              state.showPublicPreview = false;
+              showShareDialog();
+              showToast("Old link revoked; a new link is active.");
+            }
+            break;
+          case "revoke-share":
+            if (mountain) {
+              mountain.shareToken = "";
+              state.showPublicPreview = false;
+              closeDialog();
+              showShareDialog();
+              showToast("Link revoked. This Mountain is private again.");
+            }
+            break;
+          case "toggle-public-preview":
+            state.showPublicPreview = !state.showPublicPreview;
+            showShareDialog();
+            break;
+          case "select-share-url": {
+            const input = document.getElementById("share-url");
+            if (input) {
+              input.select();
+              showToast("Link selected. Copy it with ⌘C or Ctrl+C.");
+            }
+            break;
+          }
+          case "rename-activity": {
+            if (!mountain || mountain.archived) break;
+            const date = target.dataset.date;
+            const index = Number(target.dataset.index);
+            const prior = mountain.activities[date]?.[index];
+            const next = window.prompt("Rename this activity", prior);
+            if (next !== null && next.trim()) {
+              mountain.activities[date][index] = next.trim().slice(0, 180);
+              showDayDialog(date);
+              render();
+              showToast("Activity renamed.");
+            }
+            break;
+          }
+          case "delete-activity": {
+            if (!mountain || mountain.archived) break;
+            const date = target.dataset.date;
+            const index = Number(target.dataset.index);
+            mountain.activities[date].splice(index, 1);
+            if (!mountain.activities[date].length) delete mountain.activities[date];
+            showDayDialog(date);
+            render();
+            showToast("Activity deleted.");
+            break;
+          }
+          case "open-library": openLibrary(); break;
+        }
+      }
+
+      function handleSubmit(event) {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        event.preventDefault();
+        const values = new FormData(form);
+        if (form.id === "create-form") {
+          const name = String(values.get("name") || "").trim();
+          const range = adjustedRange(String(values.get("start")), String(values.get("end")));
+          if (!name || !range) {
+            showFormError(form, !name ? "Enter a name for this Mountain." : "The start date must be on or before the end date.");
+            return;
+          }
+          const mountain = {
+            id: `mountain-${Date.now()}`,
+            name,
+            start: range.start,
+            end: range.end,
+            archived: false,
+            shareToken: "",
+            activities: {}
+          };
+          state.mountains.unshift(mountain);
+          state.selectedId = mountain.id;
+          state.library = "active";
+          state.view = "week";
+          state.selectedWeekStart = initialWeek(mountain);
+          closeDialog();
+          render();
+          showToast(`Mountain created · ${range.totalDays} days, ${range.rows} rows.`);
+        } else if (form.id === "dates-form") {
+          const mountain = selectedMountain();
+          const range = adjustedRange(String(values.get("start")), String(values.get("end")));
+          if (!mountain || mountain.archived) return;
+          if (!range) {
+            showFormError(form, "The start date must be on or before the end date.");
+            return;
+          }
+          mountain.start = range.start;
+          mountain.end = range.end;
+          state.selectedWeekStart = initialWeek(mountain);
+          closeDialog();
+          render();
+          showToast("Date range updated. Hidden activity entries are kept.");
+        } else if (form.id === "activity-form") {
+          const mountain = selectedMountain();
+          if (!mountain || mountain.archived) return;
+          const text = String(values.get("text") || "").trim();
+          const date = String(values.get("date"));
+          if (!text) {
+            showFormError(form, "Enter an activity before adding it.");
+            return;
+          }
+          mountain.activities[date] ||= [];
+          mountain.activities[date].push(text.slice(0, 180));
+          showDayDialog(date);
+          render();
+          showToast("Activity added.");
+        }
+      }
+
+      app.addEventListener("click", handleClick);
+      dialogContent.addEventListener("click", handleClick);
+      document.addEventListener("submit", handleSubmit);
+      dialogContent.addEventListener("input", event => {
+        if (event.target.matches('[name="start"],[name="end"]')) updateRangePreview();
+      });
+      dialogContent.addEventListener("change", event => {
+        if (event.target.matches('[name="start"],[name="end"]')) updateRangePreview();
+      });
+      app.addEventListener("change", event => {
+        if (event.target.matches('[data-action="pick-select"]')) pickMountain(event.target.value);
+      });
+      document.querySelector(".variant-switcher").addEventListener("click", handleClick);
+      document.addEventListener("keydown", event => {
+        if (modal.open || event.altKey || event.ctrlKey || event.metaKey) return;
+        const focused = document.activeElement;
+        if (focused instanceof HTMLElement && (focused.matches("input,textarea,select") || focused.isContentEditable)) return;
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          setVariant(VARIANTS.findIndex(item => item.key === state.variant) - 1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          setVariant(VARIANTS.findIndex(item => item.key === state.variant) + 1);
+        }
+      });
+      window.addEventListener("popstate", () => {
+        state.variant = readVariant();
+        render();
+      });
+      modal.addEventListener("click", event => {
+        if (event.target === modal) closeDialog();
+      });
+      render();
+    </script>
+  </body>
+</html>
