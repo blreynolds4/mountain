@@ -1,0 +1,9 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "gh": true,
+    "/^gh api repos/blreynolds4/mountain/issues/1/sub_issues --jq '\\.\\[\\]\\.number' && gh api repos/blreynolds4/mountain/issues/4 --jq '\\.issue_dependencies_summary\\.blocked_by'$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}
