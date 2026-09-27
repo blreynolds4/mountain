@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f6f1">
+    <title>Daymark — Make your days count</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1e302b;
+        --muted: #78847c;
+        --paper: #f5f6f1;
+        --card: #fff;
+        --line: #e8ece5;
+        --green: #337a59;
+        --green-dark: #24583f;
+        --green-soft: #e3f1e7;
+        --orange: #eea86c;
+        --shadow: 0 14px 40px rgb(31 51 42 / 6%);
+        font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse at 78% -12%, #e9f0e5 0, transparent 36rem),
+          var(--paper);
+      }
+
+      button, input { font: inherit; }
+      button { color: inherit; }
+
+      .page-shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 82px;
+        border-bottom: 1px solid rgb(50 75 60 / 8%);
+      }
+      .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 16px; font-weight: 750; letter-spacing: -.04em; }
+      .brand-mark {
+        display: grid;
+        width: 31px;
+        height: 31px;
+        place-items: center;
+        border-radius: 10px;
+        color: white;
+        background: var(--green);
+        font-size: 15px;
+      }
+      .top-note { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+      .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #70a77d; }
+
+      .intro { padding: 39px 0 28px; }
+      .eyebrow { margin: 0 0 9px; color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+      h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(33px, 4vw, 47px); font-weight: 500; letter-spacing: -.055em; line-height: 1.08; }
+      .intro-copy { max-width: 570px; margin: 12px 0 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
+
+      .workspace { display: grid; grid-template-columns: 292px minmax(0, 1fr); align-items: start; gap: 22px; padding-bottom: 58px; }
+      .setup-card, .pyramid-card { border: 1px solid rgb(42 65 49 / 7%); border-radius: 17px; background: var(--card); box-shadow: var(--shadow); }
+      .setup-card { padding: 22px; }
+      .section-kicker { margin: 0 0 18px; color: #68766c; font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+      .field { display: block; margin-bottom: 15px; }
+      .field span { display: block; margin-bottom: 7px; color: #526158; font-size: 11px; font-weight: 700; }
+      .field input {
+        width: 100%;
+        min-height: 43px;
+        padding: 0 11px;
+        border: 1px solid #e4e9e2;
+        border-radius: 9px;
+        outline: none;
+        color: var(--ink);
+        background: #fcfdfa;
+        font-size: 13px;
+      }
+      .field input:focus { border-color: #73a481; box-shadow: 0 0 0 3px rgb(88 145 103 / 13%); }
+      .range-preview { min-height: 51px; margin: 2px 0 15px; padding: 10px 11px; border-radius: 9px; color: #637369; background: #f5f8f3; font-size: 11px; line-height: 1.55; }
+      .range-preview strong { color: var(--green-dark); }
+      .primary-button {
+        display: flex;
+        width: 100%;
+        min-height: 45px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 0;
+        border-radius: 9px;
+        color: white;
+        background: var(--green);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 750;
+        transition: background .16s, transform .16s;
+      }
+      .primary-button:hover { transform: translateY(-1px); background: var(--green-dark); }
+      .primary-button:focus-visible, .view-button:focus-visible, .week-nav button:focus-visible, .day-block:focus-visible, .dialog-close:focus-visible { outline: 3px solid #a5c9a9; outline-offset: 2px; }
+      .setup-footnote { margin: 12px 0 0; color: #8a958c; font-size: 10px; line-height: 1.55; }
+      .error-banner { display: none; margin: 0 0 14px; padding: 10px 11px; border: 1px solid #f0d4ca; border-radius: 8px; color: #8a4030; background: #fff6f2; font-size: 11px; line-height: 1.5; }
+      .error-banner.visible { display: block; }
+
+      .pyramid-card { min-height: 460px; overflow: hidden; }
+      .pyramid-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 21px 23px 17px; border-bottom: 1px solid #edf0eb; }
+      .pyramid-heading { min-width: 0; }
+      .pyramid-heading h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 500; letter-spacing: -.035em; }
+      .pyramid-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+      .view-switch { display: flex; flex: 0 0 auto; padding: 3px; border: 1px solid #e9ede7; border-radius: 9px; background: #f7f8f5; }
+      .view-button { min-height: 31px; padding: 0 11px; border: 0; border-radius: 6px; color: #7b877e; background: transparent; cursor: pointer; font-size: 10px; font-weight: 700; }
+      .view-button[aria-pressed="true"] { color: var(--green-dark); background: white; box-shadow: 0 1px 4px rgb(34 56 42 / 10%); }
+      .week-toolbar { display: none; align-items: center; justify-content: center; gap: 14px; min-height: 51px; border-bottom: 1px solid #f0f2ed; }
+      .week-toolbar.visible { display: flex; }
+      .week-toolbar strong { min-width: 134px; text-align: center; font-size: 11px; }
+      .week-toolbar span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 500; }
+      .week-nav { display: grid; width: 27px; height: 27px; place-items: center; border: 1px solid #e8ece6; border-radius: 8px; background: white; cursor: pointer; }
+      .week-nav:disabled { opacity: .35; cursor: default; }
+      .blocks-area { display: flex; min-height: 360px; flex-direction: column; align-items: center; justify-content: center; padding: 28px 18px 32px; }
+      .pyramid { display: flex; width: 100%; flex-direction: column-reverse; align-items: center; gap: 7px; }
+      .pyramid-row { display: flex; max-width: 100%; justify-content: center; gap: 7px; }
+      .day-block {
+        position: relative;
+        display: flex;
+        width: clamp(38px, 5vw, 55px);
+        height: clamp(46px, 5.6vw, 62px);
+        flex: 0 0 auto;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 4px;
+        border: 1px solid #e9ede7;
+        border-radius: 9px;
+        color: #35473b;
+        background: #fbfcfa;
+        cursor: pointer;
+        transition: transform .14s, border-color .14s, background .14s;
+      }
+      .day-block:hover { z-index: 1; transform: translateY(-2px); border-color: #a9c5ad; }
+      .day-block.has-activities { border-color: #cce4d1; color: #23583b; background: var(--green-soft); }
+      .day-block .day-number { font-size: 13px; font-weight: 750; line-height: 1; }
+      .day-block .day-month { color: #87948a; font-size: 8px; line-height: 1; }
+      .day-block.has-activities .day-month { color: #59816a; }
+      .day-block .activity-dot { position: absolute; top: 5px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: #4e9568; }
+      .week-grid { display: none; width: min(100%, 680px); grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 9px; }
+      .week-grid.visible { display: grid; }
+      .week-day-label { padding: 0 0 2px; color: #859087; text-align: center; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+      .week-grid .day-block { width: 100%; height: 94px; border-radius: 11px; }
+      .week-grid .day-block .day-number { font-size: 20px; }
+      .week-grid .day-block .day-month { font-size: 9px; }
+      .week-grid .day-block.outside { border-style: dashed; color: #b0b8b0; background: #f8f9f7; cursor: default; }
+      .week-grid .day-block.outside:hover { transform: none; border-color: #e9ede7; }
+      .week-grid .outside .day-month { color: #b0b8b0; }
+      .week-grid .activity-count { color: #59816a; font-size: 8px; }
+      .pyramid-footer { display: flex; justify-content: space-between; gap: 12px; padding: 13px 23px; border-top: 1px solid #edf0eb; color: #839087; font-size: 10px; }
+      .legend { display: inline-flex; align-items: center; gap: 6px; }
+      .legend-swatch { width: 9px; height: 9px; border: 1px solid #cce4d1; border-radius: 3px; background: var(--green-soft); }
+
+      .empty-state { display: flex; width: min(390px, 100%); flex-direction: column; align-items: center; text-align: center; }
+      .empty-art { display: flex; height: 145px; flex-direction: column; align-items: center; justify-content: flex-end; gap: 5px; transform: perspective(400px) rotateX(5deg); }
+      .art-row { display: flex; gap: 5px; }
+      .art-block { width: 37px; height: 27px; border: 1px solid #e5eae2; border-radius: 6px; background: #f8faf6; }
+      .art-row:nth-child(1) .art-block { width: 42px; height: 31px; border-color: #cce4d1; background: #e3f1e7; }
+      .art-row:nth-child(2) .art-block:first-child, .art-row:nth-child(2) .art-block:last-child { background: #edf5ee; }
+      .empty-state h3 { margin: 21px 0 7px; font-family: Georgia, "Times New Roman", serif; font-size: 19px; font-weight: 500; }
+      .empty-state p { max-width: 310px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+
+      dialog {
+        width: min(430px, calc(100% - 32px));
+        max-height: min(660px, calc(100% - 32px));
+        padding: 0;
+        border: 1px solid #e6ebe4;
+        border-radius: 16px;
+        color: var(--ink);
+        background: #fff;
+        box-shadow: 0 24px 90px rgb(21 37 28 / 22%);
+      }
+      dialog::backdrop { background: rgb(25 39 31 / 35%); backdrop-filter: blur(2px); }
+      .dialog-content { padding: 23px; }
+      .dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+      .dialog-header h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 500; letter-spacing: -.03em; }
+      .dialog-header p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+      .dialog-close { display: grid; width: 30px; height: 30px; flex: 0 0 auto; place-items: center; border: 1px solid #e8ece6; border-radius: 8px; background: white; cursor: pointer; }
+      .activity-form { display: flex; gap: 8px; margin: 21px 0 18px; }
+      .activity-form input { min-width: 0; height: 42px; flex: 1; padding: 0 11px; border: 1px solid #e2e8e0; border-radius: 8px; outline: none; font-size: 12px; }
+      .activity-form input:focus { border-color: #73a481; box-shadow: 0 0 0 3px rgb(88 145 103 / 13%); }
+      .activity-form button { min-width: 75px; border: 0; border-radius: 8px; color: white; background: var(--green); cursor: pointer; font-size: 11px; font-weight: 750; }
+      .activity-list-heading { margin: 0 0 9px; color: #768278; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .activity-list { display: flex; max-height: 280px; flex-direction: column; gap: 7px; overflow-y: auto; }
+      .activity-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 8px 10px; border: 1px solid #edf0eb; border-radius: 8px; background: #fcfdfa; font-size: 11px; }
+      .activity-remove { padding: 4px 6px; border: 0; border-radius: 5px; color: #89938b; background: transparent; cursor: pointer; font-size: 10px; }
+      .activity-remove:hover { color: #a44332; background: #fff1ed; }
+      .activity-empty { padding: 12px; border: 1px dashed #e4e9e2; border-radius: 8px; color: #929c93; text-align: center; font-size: 11px; }
+
+      .toast { position: fixed; right: 24px; bottom: 24px; z-index: 2; max-width: min(400px, calc(100% - 32px)); padding: 11px 15px; border: 1px solid #d8e8da; border-radius: 10px; color: #28583b; background: #f1f8f0; box-shadow: var(--shadow); font-size: 11px; line-height: 1.5; opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }
+      .toast.visible { opacity: 1; transform: translateY(0); }
+
+      @media (min-width: 1100px) {
+        .blocks-area { min-height: 425px; }
+      }
+      @media (max-width: 760px) {
+        .page-shell { width: min(100% - 30px, 600px); }
+        .topbar { min-height: 66px; }
+        .top-note { font-size: 10px; }
+        .intro { padding: 30px 0 21px; }
+        .workspace { grid-template-columns: 1fr; gap: 14px; }
+        .setup-card { padding: 18px; }
+        .setup-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 11px; }
+        .section-kicker, .range-preview, .setup-footnote, .error-banner, .primary-button { grid-column: 1 / -1; }
+        .pyramid-card { min-height: 410px; }
+        .pyramid-head { align-items: flex-start; padding: 17px; }
+        .pyramid-heading h2 { font-size: 20px; }
+        .view-button { padding: 0 8px; }
+        .blocks-area { min-height: 330px; padding: 24px 10px; }
+        .pyramid { gap: 5px; }
+        .pyramid-row { gap: 4px; }
+        .day-block { width: clamp(29px, 7.2vw, 45px); height: clamp(39px, 8.8vw, 52px); border-radius: 7px; }
+        .day-block .day-number { font-size: 11px; }
+        .day-block .day-month { font-size: 7px; }
+        .week-grid { gap: 5px; }
+        .week-grid .day-block { height: 75px; border-radius: 8px; }
+        .week-grid .day-block .day-number { font-size: 17px; }
+        .week-grid .day-block .day-month { font-size: 8px; }
+        .pyramid-footer { padding: 12px 16px; font-size: 9px; }
+      }
+      @media (max-width: 420px) {
+        .top-note { display: none; }
+        .pyramid-head { flex-direction: column; gap: 12px; }
+        .view-switch { align-self: stretch; }
+        .view-button { flex: 1; }
+        .week-grid .day-block { height: 66px; }
+        .pyramid-footer { flex-direction: column; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>daymark</span></div>
+        <div class="top-note"><span class="live-dot" aria-hidden="true"></span>Your days, gathered with intention</div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <p class="eyebrow">A little progress, every day</p>
+          <h1 id="page-title">Make your days<br>count for something.</h1>
+          <p class="intro-copy">Build a pyramid from your calendar. Each block is one day, and every activity you log makes that day shine green.</p>
+        </section>
+
+        <div class="workspace">
+          <aside class="setup-card" aria-labelledby="setup-title">
+            <h2 class="section-kicker" id="setup-title">Your date range</h2>
+            <div class="error-banner" id="error-banner" role="alert"></div>
+            <form id="setup-form">
+              <div class="setup-fields">
+                <label class="field">
+                  <span>Start date</span>
+                  <input id="start-date" name="startDate" type="date" required>
+                </label>
+                <label class="field">
+                  <span>End date</span>
+                  <input id="end-date" name="endDate" type="date" required>
+                </label>
+                <div class="range-preview" id="range-preview" aria-live="polite"></div>
+                <button class="primary-button" id="build-button" type="submit">Build my pyramid <span aria-hidden="true">↗</span></button>
+              </div>
+            </form>
+            <p class="setup-footnote">A complete pyramid needs a triangular number of days. If needed, your start date moves earlier so your chosen end date stays at the peak.</p>
+          </aside>
+
+          <section class="pyramid-card" aria-labelledby="pyramid-title">
+            <div class="pyramid-head">
+              <div class="pyramid-heading">
+                <h2 id="pyramid-title">Your pyramid</h2>
+                <p id="pyramid-subtitle">A fresh start, one day at a time.</p>
+              </div>
+              <div class="view-switch" role="group" aria-label="Pyramid view">
+                <button class="view-button" id="week-view-button" type="button" aria-pressed="false" disabled>This week</button>
+                <button class="view-button" id="whole-view-button" type="button" aria-pressed="true" disabled>Whole pyramid</button>
+              </div>
+            </div>
+            <div class="week-toolbar" id="week-toolbar">
+              <button class="week-nav" id="previous-week" type="button" aria-label="Previous week">‹</button>
+              <strong id="week-label"></strong>
+              <button class="week-nav" id="next-week" type="button" aria-label="Next week">›</button>
+            </div>
+            <div class="blocks-area" id="blocks-area">
+              <div class="empty-state">
+                <div class="empty-art" aria-hidden="true">
+                  <div class="art-row"><span class="art-block"></span></div>
+                  <div class="art-row"><span class="art-block"></span><span class="art-block"></span><span class="art-block"></span></div>
+                  <div class="art-row"><span class="art-block"></span><span class="art-block"></span><span class="art-block"></span><span class="art-block"></span><span class="art-block"></span></div>
+                </div>
+                <h3>Your story starts here</h3>
+                <p>Choose a date range and build your pyramid. Then tap any day to add the things you did.</p>
+              </div>
+            </div>
+            <div class="pyramid-footer">
+              <span class="legend"><span class="legend-swatch" aria-hidden="true"></span>Days with activities</span>
+              <span id="progress-label">No days yet</span>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="activity-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-content">
+        <div class="dialog-header">
+          <div>
+            <h2 id="dialog-title">Log your day</h2>
+            <p id="dialog-date"></p>
+          </div>
+          <button class="dialog-close" id="close-dialog" type="button" aria-label="Close">×</button>
+        </div>
+        <form class="activity-form" id="activity-form">
+          <input id="activity-input" type="text" maxlength="120" autocomplete="off" placeholder="What did you do today?" aria-label="Activity" required>
+          <button type="submit">Add</button>
+        </form>
+        <h3 class="activity-list-heading">Activities for this day</h3>
+        <div class="activity-list" id="activity-list"></div>
+      </div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const STORAGE_KEY = "daymark-pyramid-v1";
+        const startInput = document.querySelector("#start-date");
+        const endInput = document.querySelector("#end-date");
+        const preview = document.querySelector("#range-preview");
+        const form = document.querySelector("#setup-form");
+        const buildButton = document.querySelector("#build-button");
+        const errorBanner = document.querySelector("#error-banner");
+        const blocksArea = document.querySelector("#blocks-area");
+        const subtitle = document.querySelector("#pyramid-subtitle");
+        const progressLabel = document.querySelector("#progress-label");
+        const weekButton = document.querySelector("#week-view-button");
+        const wholeButton = document.querySelector("#whole-view-button");
+        const weekToolbar = document.querySelector("#week-toolbar");
+        const weekLabel = document.querySelector("#week-label");
+        const previousWeek = document.querySelector("#previous-week");
+        const nextWeek = document.querySelector("#next-week");
+        const activityDialog = document.querySelector("#activity-dialog");
+        const dialogTitle = document.querySelector("#dialog-title");
+        const dialogDate = document.querySelector("#dialog-date");
+        const activityForm = document.querySelector("#activity-form");
+        const activityInput = document.querySelector("#activity-input");
+        const activityList = document.querySelector("#activity-list");
+        const toast = document.querySelector("#toast");
+
+        let pyramid = null;
+        let view = "whole";
+        let selectedWeekStart = "";
+        let selectedDay = "";
+        let toastTimer = 0;
+
+        function isoFromDate(date) {
+          return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+        }
+
+        function localToday() {
+          const date = new Date();
+          return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+        }
+
+        function dateFromIso(iso) {
+          const parts = iso.split("-").map(Number);
+          return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+        }
+
+        function addDays(iso, amount) {
+          const date = dateFromIso(iso);
+          date.setUTCDate(date.getUTCDate() + amount);
+          return isoFromDate(date);
+        }
+
+        function daysBetween(start, end) {
+          return Math.round((dateFromIso(end) - dateFromIso(start)) / 86400000);
+        }
+
+        function isIsoDate(value) {
+          if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+          const date = dateFromIso(value);
+          return isoFromDate(date) === value;
+        }
+
+        function formatDate(iso, options = { month: "short", day: "numeric", year: "numeric" }) {
+          return new Intl.DateTimeFormat(undefined, { ...options, timeZone: "UTC" }).format(dateFromIso(iso));
+        }
+
+        function mondayOf(iso) {
+          const day = dateFromIso(iso).getUTCDay();
+          return addDays(iso, -((day + 6) % 7));
+        }
+
+        function pyramidSizeFor(dayCount) {
+          let rows = Math.ceil((Math.sqrt(8 * dayCount + 1) - 1) / 2);
+          while (rows * (rows + 1) / 2 < dayCount) rows += 1;
+          while (rows > 1 && (rows - 1) * rows / 2 >= dayCount) rows -= 1;
+          return rows;
+        }
+
+        function getAdjustedRange(start, end) {
+          if (!isIsoDate(start) || !isIsoDate(end)) return null;
+          const requestedDays = daysBetween(start, end) + 1;
+          if (requestedDays < 1) return null;
+          const rows = pyramidSizeFor(requestedDays);
+          const totalDays = rows * (rows + 1) / 2;
+          return {
+            start: addDays(end, -(totalDays - 1)),
+            end,
+            requestedDays,
+            totalDays,
+            rows,
+            addedDays: totalDays - requestedDays
+          };
+        }
+
+        function showError(message) {
+          errorBanner.textContent = message;
+          errorBanner.classList.add("visible");
+        }
+
+        function clearError() {
+          errorBanner.textContent = "";
+          errorBanner.classList.remove("visible");
+        }
+
+        function showToast(message) {
+          toast.textContent = message;
+          toast.classList.add("visible");
+          window.clearTimeout(toastTimer);
+          toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 3200);
+        }
+
+        function savePyramid() {
+          try {
+            if (pyramid) localStorage.setItem(STORAGE_KEY, JSON.stringify(pyramid));
+            else localStorage.removeItem(STORAGE_KEY);
+            clearError();
+            return true;
+          } catch (error) {
+            showError(`Your change could not be saved in this browser. ${error instanceof Error ? error.message : "Storage is unavailable."}`);
+            return false;
+          }
+        }
+
+        function loadPyramid() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !isIsoDate(parsed.startDate) || !isIsoDate(parsed.endDate) || parsed.startDate > parsed.endDate || !parsed.activities || typeof parsed.activities !== "object" || Array.isArray(parsed.activities)) {
+              throw new Error("The saved pyramid has an invalid format.");
+            }
+            const dayCount = daysBetween(parsed.startDate, parsed.endDate) + 1;
+            const rowCount = pyramidSizeFor(dayCount);
+            if (rowCount * (rowCount + 1) / 2 !== dayCount) {
+              throw new Error("The saved date range does not form a complete pyramid.");
+            }
+            for (const [date, activities] of Object.entries(parsed.activities)) {
+              if (!isIsoDate(date) || date < parsed.startDate || date > parsed.endDate || !Array.isArray(activities) || activities.some(activity => typeof activity !== "string")) {
+                throw new Error("The saved activities have an invalid format.");
+              }
+            }
+            return parsed;
+          } catch (error) {
+            showError(`Saved data could not be loaded. Build a new pyramid to replace it. ${error instanceof Error ? error.message : ""}`);
+            return null;
+          }
+        }
+
+        function updateRangePreview() {
+          const range = getAdjustedRange(startInput.value, endInput.value);
+          if (!range) {
+            preview.textContent = "Choose a valid start and end date.";
+            return;
+          }
+          const dayText = range.requestedDays === 1 ? "day selected" : "days selected";
+          if (range.addedDays) {
+            preview.innerHTML = `<strong>${range.totalDays} days · ${range.rows} rows</strong><br>${range.requestedDays} ${dayText}; start moves back ${range.addedDays} ${range.addedDays === 1 ? "day" : "days"}.`;
+          } else {
+            preview.innerHTML = `<strong>${range.totalDays} days · ${range.rows} rows</strong><br>Your range already makes a complete pyramid.`;
+          }
+        }
+
+        function setView(nextView) {
+          view = nextView;
+          weekButton.setAttribute("aria-pressed", String(view === "week"));
+          wholeButton.setAttribute("aria-pressed", String(view === "whole"));
+          weekToolbar.classList.toggle("visible", view === "week" && Boolean(pyramid));
+          renderPyramid();
+        }
+
+        function createDayBlock(iso, outside = false) {
+          const activities = pyramid.activities[iso] || [];
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `day-block${activities.length ? " has-activities" : ""}${outside ? " outside" : ""}`;
+          button.dataset.date = iso;
+          button.setAttribute("aria-label", `${formatDate(iso, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}${activities.length ? `, ${activities.length} ${activities.length === 1 ? "activity" : "activities"}` : ", no activities"}`);
+          if (outside) {
+            button.disabled = true;
+          } else {
+            button.addEventListener("click", () => openActivityDialog(iso));
+          }
+          const number = document.createElement("span");
+          number.className = "day-number";
+          number.textContent = String(dateFromIso(iso).getUTCDate());
+          const month = document.createElement("span");
+          month.className = "day-month";
+          month.textContent = formatDate(iso, { month: "short" });
+          button.append(number, month);
+          if (!outside && activities.length) {
+            const dot = document.createElement("span");
+            dot.className = "activity-dot";
+            dot.setAttribute("aria-hidden", "true");
+            button.append(dot);
+          }
+          if (view === "week" && !outside) {
+            const count = document.createElement("span");
+            count.className = "activity-count";
+            count.textContent = activities.length ? `${activities.length} ${activities.length === 1 ? "activity" : "activities"}` : "—";
+            button.append(count);
+          }
+          return button;
+        }
+
+        function renderWholePyramid() {
+          const pyramidElement = document.createElement("div");
+          pyramidElement.className = "pyramid";
+          const total = daysBetween(pyramid.startDate, pyramid.endDate) + 1;
+          let nextDayIndex = 0;
+          const rowCount = pyramidSizeFor(total);
+          for (let rowSize = rowCount; rowSize >= 1; rowSize -= 1) {
+            const row = document.createElement("div");
+            row.className = "pyramid-row";
+            for (let i = 0; i < rowSize; i += 1) {
+              const iso = addDays(pyramid.startDate, nextDayIndex++);
+              row.append(createDayBlock(iso));
+            }
+            pyramidElement.append(row);
+          }
+          blocksArea.replaceChildren(pyramidElement);
+        }
+
+        function hasDaysInWeek(weekStart) {
+          const weekEnd = addDays(weekStart, 6);
+          return weekEnd >= pyramid.startDate && weekStart <= pyramid.endDate;
+        }
+
+        function renderWeek() {
+          while (!hasDaysInWeek(selectedWeekStart)) selectedWeekStart = mondayOf(pyramid.endDate);
+          const weekEnd = addDays(selectedWeekStart, 6);
+          const labelStart = formatDate(selectedWeekStart, { month: "short", day: "numeric" });
+          const labelEnd = formatDate(weekEnd, { month: "short", day: "numeric", year: "numeric" });
+          weekLabel.replaceChildren(document.createTextNode(`${labelStart} – ${labelEnd}`));
+          const note = document.createElement("span");
+          note.textContent = "Monday – Sunday";
+          weekLabel.append(note);
+
+          const grid = document.createElement("div");
+          grid.className = "week-grid visible";
+          const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+          for (let index = 0; index < 7; index += 1) {
+            const day = addDays(selectedWeekStart, index);
+            const label = document.createElement("span");
+            label.className = "week-day-label";
+            label.textContent = labels[index];
+            grid.append(label);
+            grid.append(createDayBlock(day, day < pyramid.startDate || day > pyramid.endDate));
+          }
+          blocksArea.replaceChildren(grid);
+          previousWeek.disabled = !hasDaysInWeek(addDays(selectedWeekStart, -7));
+          nextWeek.disabled = !hasDaysInWeek(addDays(selectedWeekStart, 7));
+        }
+
+        function renderPyramid() {
+          if (!pyramid) return;
+          if (view === "week") renderWeek();
+          else renderWholePyramid();
+
+          const totalDays = daysBetween(pyramid.startDate, pyramid.endDate) + 1;
+          const daysWithActivities = Object.values(pyramid.activities).filter(activities => activities.length > 0).length;
+          const activityCount = Object.values(pyramid.activities).reduce((total, activities) => total + activities.length, 0);
+          subtitle.textContent = `${formatDate(pyramid.startDate)} – ${formatDate(pyramid.endDate)} · ${totalDays} days`;
+          progressLabel.textContent = `${daysWithActivities} of ${totalDays} days · ${activityCount} ${activityCount === 1 ? "activity" : "activities"}`;
+        }
+
+        function openActivityDialog(iso) {
+          selectedDay = iso;
+          dialogTitle.textContent = formatDate(iso, { weekday: "long", month: "long", day: "numeric" });
+          dialogDate.textContent = "Add one or more activities for this day.";
+          renderActivityList();
+          activityDialog.showModal();
+          activityInput.focus();
+        }
+
+        function renderActivityList() {
+          const activities = pyramid.activities[selectedDay] || [];
+          if (!activities.length) {
+            const empty = document.createElement("div");
+            empty.className = "activity-empty";
+            empty.textContent = "Nothing logged yet. Add your first activity above.";
+            activityList.replaceChildren(empty);
+            return;
+          }
+          const items = activities.map((activity, index) => {
+            const item = document.createElement("div");
+            item.className = "activity-item";
+            const text = document.createElement("span");
+            text.textContent = activity;
+            const remove = document.createElement("button");
+            remove.className = "activity-remove";
+            remove.type = "button";
+            remove.textContent = "Remove";
+            remove.setAttribute("aria-label", `Remove ${activity}`);
+            remove.addEventListener("click", () => {
+              activities.splice(index, 1);
+              if (!activities.length) delete pyramid.activities[selectedDay];
+              savePyramid();
+              renderActivityList();
+              renderPyramid();
+            });
+            item.append(text, remove);
+            return item;
+          });
+          activityList.replaceChildren(...items);
+        }
+
+        const today = localToday();
+        const defaultEnd = today;
+        const defaultStart = addDays(today, -13);
+        startInput.value = defaultStart;
+        endInput.value = defaultEnd;
+
+        pyramid = loadPyramid();
+        if (pyramid) {
+          startInput.value = pyramid.startDate;
+          endInput.value = pyramid.endDate;
+          buildButton.innerHTML = "Update my pyramid <span aria-hidden=\"true\">↗</span>";
+          const todayInRange = today >= pyramid.startDate && today <= pyramid.endDate;
+          selectedWeekStart = mondayOf(todayInRange ? today : pyramid.endDate);
+          weekButton.disabled = false;
+          wholeButton.disabled = false;
+          renderPyramid();
+        }
+        updateRangePreview();
+
+        startInput.addEventListener("input", updateRangePreview);
+        endInput.addEventListener("input", updateRangePreview);
+        form.addEventListener("submit", event => {
+          event.preventDefault();
+          clearError();
+          const range = getAdjustedRange(startInput.value, endInput.value);
+          if (!range) {
+            showError("Choose a valid date range with the end date on or after the start date.");
+            return;
+          }
+
+          const datesChanged = !pyramid || pyramid.startDate !== range.start || pyramid.endDate !== range.end;
+          const hasActivities = pyramid && Object.values(pyramid.activities).some(activities => activities.length);
+          if (datesChanged && hasActivities && !window.confirm("Update this pyramid? Activities on dates that remain in the new range will be kept; activities outside it will be removed.")) return;
+
+          const activities = {};
+          if (pyramid) {
+            for (const [date, entries] of Object.entries(pyramid.activities)) {
+              if (date >= range.start && date <= range.end) activities[date] = entries;
+            }
+          }
+          pyramid = { startDate: range.start, endDate: range.end, activities };
+          startInput.value = range.start;
+          endInput.value = range.end;
+          buildButton.innerHTML = "Update my pyramid <span aria-hidden=\"true\">↗</span>";
+          const todayInRange = today >= range.start && today <= range.end;
+          selectedWeekStart = mondayOf(todayInRange ? today : range.end);
+          weekButton.disabled = false;
+          wholeButton.disabled = false;
+          setView("whole");
+          savePyramid();
+          updateRangePreview();
+          if (range.addedDays) {
+            showToast(`Pyramid built with ${range.totalDays} days. Start date moved back ${range.addedDays} ${range.addedDays === 1 ? "day" : "days"} to keep your end date at the peak.`);
+          } else {
+            showToast(`Your ${range.rows}-row pyramid is ready.`);
+          }
+        });
+
+        weekButton.addEventListener("click", () => setView("week"));
+        wholeButton.addEventListener("click", () => setView("whole"));
+        previousWeek.addEventListener("click", () => {
+          selectedWeekStart = addDays(selectedWeekStart, -7);
+          renderPyramid();
+        });
+        nextWeek.addEventListener("click", () => {
+          selectedWeekStart = addDays(selectedWeekStart, 7);
+          renderPyramid();
+        });
+        document.querySelector("#close-dialog").addEventListener("click", () => activityDialog.close());
+        activityDialog.addEventListener("click", event => {
+          if (event.target === activityDialog) activityDialog.close();
+        });
+        activityForm.addEventListener("submit", event => {
+          event.preventDefault();
+          const activity = activityInput.value.trim();
+          if (!activity || !selectedDay) return;
+          if (!pyramid.activities[selectedDay]) pyramid.activities[selectedDay] = [];
+          pyramid.activities[selectedDay].push(activity);
+          savePyramid();
+          renderActivityList();
+          renderPyramid();
+          activityInput.value = "";
+          activityInput.focus();
+        });
+      })();
+    </script>
+  </body>
+</html>
